@@ -1,4 +1,5 @@
 const socket = io();
+
 console.log("Attempting to connect with server via websocket");
 
 socket.emit(
@@ -15,7 +16,7 @@ let products = [];
 function renderProductsFetched(products) {
 	const realtimeProductsList = document.getElementById("realtime-products");
 	for (const product of products) {
-		realtimeProductsList.innerHTML += `<article style="background-color: whitesmoke;margin: 2%;padding: 2%;border-radius: 0.25rem;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px; width: 20%; height: max-content">
+		realtimeProductsList.innerHTML += `<article id=${product.id} style="background-color: whitesmoke;margin: 2%;padding: 2%;border-radius: 0.25rem;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px; width: 20%; height: max-content">
 		<h2 style="color: rgb(3, 80, 128);">
 		${product.title}
 		</h3>
@@ -29,11 +30,17 @@ function renderProductsFetched(products) {
 			Stock:
 			${product.stock}
 		</h3>
+		<button onclick="deleteProductWithId('${product.id}')" style="background-color: brown; color: whitesmoke; border: none; border-radius: 0.25rem; padding: 0.5rem; width: 30%; cursor: pointer">Borrar</button>
 	</article>`;
 	}
 	return;
 }
 
+function deleteProductWithId(anId) {
+	products = products.filter((product) => product.id !== anId);
+	socket.emit("delete-product-data", anId);
+	location.reload();
+}
 async function getProductsDataAndRender() {
 	await fetch("http://localhost:8080/products-data", {
 		method: "GET",
@@ -51,7 +58,6 @@ getProductsDataAndRender();
 
 function isValidProductData(productData) {
 	let validData = true;
-
 	if (!productData.title) {
 		Swal.fire({
 			position: "center",
@@ -147,6 +153,7 @@ function addProductToRealtimeProductsList(productData) {
 		Stock:
 		${productData.stock}
 	</h3>
+	<button onclick="deleteProductWithId('${productData.id}')" style="background-color: brown; color: whitesmoke; border: none; border-radius: 0.25rem; padding: 0.5rem; width: 30%; cursor: pointer">Borrar</button>
 </article>`;
 	Swal.fire({
 		position: "center",
@@ -173,8 +180,11 @@ function submitForm(event) {
 	};
 
 	try {
-		addProductToRealtimeProductsList(productData);
 		socket.emit("new-product-data", productData);
+		socket.on("new-product-id", (id) => {
+			console.log(id);
+			addProductToRealtimeProductsList({ ...productData, id });
+		});
 	} catch (error) {
 		console.error(error);
 	}

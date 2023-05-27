@@ -34,6 +34,7 @@ app.get("/products-data", async (req, res) => {
 	const products = await productManager.getProducts();
 	return res.status(200).send(products);
 });
+
 // Products without websocket serving a view
 app.get("/products", async (req, res) => {
 	const products = await productManager.getProducts();
@@ -62,7 +63,15 @@ socketServer.on("connection", (socket) => {
 	});
 	socket.on("new-product-data", async (product) => {
 		try {
-			await productManager.addProduct(product);
+			let id = await productManager.addProduct(product);
+			socket.emit("new-product-id", id);
+		} catch (error) {
+			console.log(error);
+		}
+	});
+	socket.on("delete-product-data", async (anId) => {
+		try {
+			await productManager.deleteProduct(anId);
 		} catch (error) {
 			console.log(error);
 		}
