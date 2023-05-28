@@ -184,6 +184,7 @@ function submitForm(event) {
 		socket.on("new-product-id", (id) => {
 			console.log(id);
 			addProductToRealtimeProductsList({ ...productData, id });
+			location.reload();
 		});
 	} catch (error) {
 		console.error(error);
